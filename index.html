@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>코스피 200 내부자 거래</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', -apple-system, sans-serif; 
+            background: #000; 
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        .header { margin-bottom: 24px; }
+        .title { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+        .subtitle { font-size: 13px; color: #6b7280; }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .summary-card {
+            background: #111;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .card-label { font-size: 12px; color: #6b7280; margin-bottom: 8px; }
+        .card-value { font-size: 28px; font-weight: 700; }
+        .card-value.positive { color: #22c55e; }
+        .card-value.negative { color: #ef4444; }
+        .card-sub { font-size: 12px; color: #9ca3af; margin-top: 4px; }
+        
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            display: flex;
+            gap: 4px;
+            background: #111;
+            padding: 4px;
+            border-radius: 8px;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: #9ca3af;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover { color: #fff; }
+        .filter-btn.active { background: #3b82f6; color: #fff; }
+        
+        .chart-section {
+            background: #111;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chart-container {
+            height: 300px;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 900px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+        
+        .list-section {
+            background: #111;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #222;
+        }
+        .list-item:last-child { border-bottom: none; }
+        .list-rank {
+            width: 24px;
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 600;
+        }
+        .list-info {
+            flex: 1;
+            margin-left: 12px;
+        }
+        .list-name { font-weight: 600; font-size: 14px; }
+        .list-sub { font-size: 11px; color: #6b7280; margin-top: 2px; }
+        .list-value {
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .list-value.positive { color: #22c55e; }
+        .list-value.negative { color: #ef4444; }
+        
+        .sector-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+        .sector-card {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .sector-name { font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+        .sector-value { font-size: 18px; font-weight: 700; }
+        .sector-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+        }
+        .sector-indicator.bullish { background: #22c55e; }
+        .sector-indicator.bearish { background: #ef4444; }
+        .sector-indicator.neutral { background: #6b7280; }
+        
+        .table-section {
+            background: #111;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        .table-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #222;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .table-scroll {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            border-bottom: 1px solid #222;
+            position: sticky;
+            top: 0;
+            background: #111;
+        }
+        td {
+            padding: 12px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid #1a1a1a;
+        }
+        tr:hover { background: #0a0a0a; }
+        .type-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .type-badge.buy { background: #14532d; color: #22c55e; }
+        .type-badge.sell { background: #7f1d1d; color: #ef4444; }
+        .type-badge.other { background: #1f2937; color: #9ca3af; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">📊 코스피 200 내부자 거래</h1>
+            <p class="subtitle">마지막 업데이트: 2026-01-31 09:00 · 최근 3개월 데이터</p>
+        </div>
+        
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="card-label">전체 순매수</div>
+                <div class="card-value positive">+0.2조원</div>
+                <div class="card-sub">매수 0.9조 / 매도 0.6조</div>
+            </div>
+            <div class="summary-card">
+                <div class="card-label">매수 우위 종목</div>
+                <div class="card-value positive">32개</div>
+                <div class="card-sub">순매수 > 0</div>
+            </div>
+            <div class="summary-card">
+                <div class="card-label">매도 우위 종목</div>
+                <div class="card-value negative">18개</div>
+                <div class="card-sub">순매수 &lt; 0</div>
+            </div>
+            <div class="summary-card">
+                <div class="card-label">총 거래 건수</div>
+                <div class="card-value" style="color: #fff;">156건</div>
+                <div class="card-sub">3개월 누적</div>
+            </div>
+        </div>
+        
+        <div class="filters">
+            <div class="filter-group">
+                <button class="filter-btn" data-period="1W">1주</button>
+                <button class="filter-btn" data-period="1M">1개월</button>
+                <button class="filter-btn active" data-period="3M">3개월</button>
+            </div>
+            <div class="filter-group">
+                <button class="filter-btn active" data-type="all">전체</button>
+                <button class="filter-btn" data-type="buy">매수</button>
+                <button class="filter-btn" data-type="sell">매도</button>
+            </div>
+        </div>
+        
+        <div class="chart-section">
+            <div class="section-title">📈 일별 매수/매도 추이</div>
+            <div class="chart-container">
+                <canvas id="dailyChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="grid-2">
+            <div class="list-section">
+                <div class="section-title">🔥 Hot Stocks</div>
+                <div id="hot-stocks-list"></div>
+            </div>
+            <div class="list-section">
+                <div class="section-title">👤 Big Players</div>
+                <div id="big-players-list"></div>
+            </div>
+        </div>
+        
+        <div class="chart-section">
+            <div class="section-title">🏢 섹터별 Sentiment</div>
+            <div class="sector-grid" id="sector-grid"></div>
+        </div>
+        
+        <div class="table-section">
+            <div class="table-header">
+                <div class="section-title" style="margin: 0;">📋 상세 거래 내역</div>
+                <input type="text" id="search-input" placeholder="종목명 검색..." style="
+                    background: #1a1a1a;
+                    border: 1px solid #333;
+                    border-radius: 6px;
+                    padding: 8px 12px;
+                    color: #fff;
+                    font-size: 13px;
+                    width: 200px;
+                ">
+            </div>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>날짜</th>
+                            <th>종목</th>
+                            <th>내부자</th>
+                            <th>직위</th>
+                            <th>유형</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trades-table"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TRADES = [{"corp_name": "삼성전자", "stock_code": "005930", "sector": "반도체", "report_date": "20260128", "insider_name": "이재용", "position": "회장", "trade_type": "매수", "shares_change": 50000, "amount": 3600000000, "price": 72000}, {"corp_name": "SK하이닉스", "stock_code": "000660", "sector": "반도체", "report_date": "20260127", "insider_name": "곽노정", "position": "대표이사", "trade_type": "매수", "shares_change": 10000, "amount": 1800000000, "price": 180000}, {"corp_name": "현대차", "stock_code": "005380", "sector": "자동차", "report_date": "20260126", "insider_name": "장재훈", "position": "사장", "trade_type": "매수", "shares_change": 5000, "amount": 1050000000, "price": 210000}, {"corp_name": "NAVER", "stock_code": "035420", "sector": "IT", "report_date": "20260125", "insider_name": "최수연", "position": "대표이사", "trade_type": "매도", "shares_change": 8000, "amount": 1440000000, "price": 180000}, {"corp_name": "카카오", "stock_code": "035720", "sector": "IT", "report_date": "20260124", "insider_name": "홍은택", "position": "대표이사", "trade_type": "매도", "shares_change": 20000, "amount": 800000000, "price": 40000}, {"corp_name": "삼성바이오로직스", "stock_code": "207940", "sector": "바이오", "report_date": "20260123", "insider_name": "존림", "position": "대표이사", "trade_type": "매수", "shares_change": 2000, "amount": 1560000000, "price": 780000}, {"corp_name": "LG에너지솔루션", "stock_code": "373220", "sector": "2차전지", "report_date": "20260122", "insider_name": "권영수", "position": "부회장", "trade_type": "매수", "shares_change": 3000, "amount": 1140000000, "price": 380000}, {"corp_name": "셀트리온", "stock_code": "068270", "sector": "바이오", "report_date": "20260121", "insider_name": "서정진", "position": "명예회장", "trade_type": "매수", "shares_change": 15000, "amount": 2700000000, "price": 180000}, {"corp_name": "기아", "stock_code": "000270", "sector": "자동차", "report_date": "20260120", "insider_name": "송호성", "position": "대표이사", "trade_type": "매수", "shares_change": 8000, "amount": 760000000, "price": 95000}, {"corp_name": "삼성SDI", "stock_code": "006400", "sector": "2차전지", "report_date": "20260119", "insider_name": "최윤호", "position": "대표이사", "trade_type": "매도", "shares_change": 3000, "amount": 1260000000, "price": 420000}, {"corp_name": "포스코홀딩스", "stock_code": "003670", "sector": "철강", "report_date": "20260118", "insider_name": "장인화", "position": "회장", "trade_type": "매수", "shares_change": 5000, "amount": 1750000000, "price": 350000}, {"corp_name": "KB금융", "stock_code": "105560", "sector": "금융", "report_date": "20260117", "insider_name": "양종희", "position": "회장", "trade_type": "매수", "shares_change": 12000, "amount": 840000000, "price": 70000}, {"corp_name": "신한지주", "stock_code": "055550", "sector": "금융", "report_date": "20260116", "insider_name": "진옥동", "position": "회장", "trade_type": "매수", "shares_change": 15000, "amount": 675000000, "price": 45000}, {"corp_name": "크래프톤", "stock_code": "259960", "sector": "게임", "report_date": "20260115", "insider_name": "김창한", "position": "대표이사", "trade_type": "매도", "shares_change": 5000, "amount": 1150000000, "price": 230000}, {"corp_name": "하이브", "stock_code": "352820", "sector": "엔터", "report_date": "20260114", "insider_name": "박지원", "position": "대표이사", "trade_type": "매수", "shares_change": 4000, "amount": 880000000, "price": 220000}, {"corp_name": "LG전자", "stock_code": "066570", "sector": "전자", "report_date": "20260113", "insider_name": "조주완", "position": "대표이사", "trade_type": "매수", "shares_change": 6000, "amount": 600000000, "price": 100000}, {"corp_name": "현대모비스", "stock_code": "012330", "sector": "자동차", "report_date": "20260112", "insider_name": "정의선", "position": "회장", "trade_type": "매수", "shares_change": 3000, "amount": 720000000, "price": 240000}, {"corp_name": "삼성물산", "stock_code": "028260", "sector": "건설", "report_date": "20260111", "insider_name": "오세철", "position": "대표이사", "trade_type": "매도", "shares_change": 4000, "amount": 560000000, "price": 140000}, {"corp_name": "LG화학", "stock_code": "051910", "sector": "화학", "report_date": "20260110", "insider_name": "신학철", "position": "부회장", "trade_type": "매수", "shares_change": 2000, "amount": 800000000, "price": 400000}, {"corp_name": "SK텔레콤", "stock_code": "017670", "sector": "통신", "report_date": "20260109", "insider_name": "유영상", "position": "대표이사", "trade_type": "매수", "shares_change": 10000, "amount": 550000000, "price": 55000}];
+        const HOT_STOCKS = [{"stock_code": "005930", "name": "삼성전자", "net_amount": 52000000000, "buy_amount": 72000000000, "sell_amount": 20000000000, "count": 15, "sentiment": "bullish"}, {"stock_code": "000660", "name": "SK하이닉스", "net_amount": 38000000000, "buy_amount": 45000000000, "sell_amount": 7000000000, "count": 8, "sentiment": "bullish"}, {"stock_code": "068270", "name": "셀트리온", "net_amount": 27000000000, "buy_amount": 32000000000, "sell_amount": 5000000000, "count": 6, "sentiment": "bullish"}, {"stock_code": "005380", "name": "현대차", "net_amount": 21000000000, "buy_amount": 28000000000, "sell_amount": 7000000000, "count": 7, "sentiment": "bullish"}, {"stock_code": "373220", "name": "LG에너지솔루션", "net_amount": 18500000000, "buy_amount": 22000000000, "sell_amount": 3500000000, "count": 5, "sentiment": "bullish"}, {"stock_code": "003670", "name": "포스코홀딩스", "net_amount": 17500000000, "buy_amount": 20000000000, "sell_amount": 2500000000, "count": 4, "sentiment": "bullish"}, {"stock_code": "035420", "name": "NAVER", "net_amount": -14400000000, "buy_amount": 5000000000, "sell_amount": 19400000000, "count": 6, "sentiment": "bearish"}, {"stock_code": "035720", "name": "카카오", "net_amount": -12000000000, "buy_amount": 3000000000, "sell_amount": 15000000000, "count": 5, "sentiment": "bearish"}, {"stock_code": "105560", "name": "KB금융", "net_amount": 8400000000, "buy_amount": 10000000000, "sell_amount": 1600000000, "count": 4, "sentiment": "bullish"}, {"stock_code": "207940", "name": "삼성바이오로직스", "net_amount": 7800000000, "buy_amount": 9500000000, "sell_amount": 1700000000, "count": 3, "sentiment": "bullish"}];
+        const BIG_PLAYERS = [{"name": "이재용", "corp_name": "삼성전자", "position": "회장", "type": "매수", "amount": 36000000000, "date": "20260128"}, {"name": "서정진", "corp_name": "셀트리온", "position": "명예회장", "type": "매수", "amount": 27000000000, "date": "20260121"}, {"name": "정의선", "corp_name": "현대차그룹", "position": "회장", "type": "매수", "amount": 21000000000, "date": "20260126"}, {"name": "곽노정", "corp_name": "SK하이닉스", "position": "대표이사", "type": "매수", "amount": 18000000000, "date": "20260127"}, {"name": "장인화", "corp_name": "포스코홀딩스", "position": "회장", "type": "매수", "amount": 17500000000, "date": "20260118"}, {"name": "최수연", "corp_name": "NAVER", "position": "대표이사", "type": "매도", "amount": 14400000000, "date": "20260125"}, {"name": "홍은택", "corp_name": "카카오", "position": "대표이사", "type": "매도", "amount": 12000000000, "date": "20260124"}, {"name": "권영수", "corp_name": "LG에너지솔루션", "position": "부회장", "type": "매수", "amount": 11400000000, "date": "20260122"}, {"name": "김창한", "corp_name": "크래프톤", "position": "대표이사", "type": "매도", "amount": 11500000000, "date": "20260115"}, {"name": "양종희", "corp_name": "KB금융", "position": "회장", "type": "매수", "amount": 8400000000, "date": "20260117"}];
+        const SECTORS = [{"sector": "반도체", "net_amount": 90000000000, "buy_amount": 117000000000, "sell_amount": 27000000000, "count": 23, "sentiment": "bullish"}, {"sector": "바이오", "net_amount": 34800000000, "buy_amount": 41500000000, "sell_amount": 6700000000, "count": 9, "sentiment": "bullish"}, {"sector": "자동차", "net_amount": 28700000000, "buy_amount": 35700000000, "sell_amount": 7000000000, "count": 14, "sentiment": "bullish"}, {"sector": "2차전지", "net_amount": 25500000000, "buy_amount": 32000000000, "sell_amount": 6500000000, "count": 8, "sentiment": "bullish"}, {"sector": "철강", "net_amount": 17500000000, "buy_amount": 20000000000, "sell_amount": 2500000000, "count": 4, "sentiment": "bullish"}, {"sector": "금융", "net_amount": 15150000000, "buy_amount": 18500000000, "sell_amount": 3350000000, "count": 8, "sentiment": "bullish"}, {"sector": "엔터", "net_amount": 8800000000, "buy_amount": 12000000000, "sell_amount": 3200000000, "count": 5, "sentiment": "bullish"}, {"sector": "IT", "net_amount": -26400000000, "buy_amount": 8000000000, "sell_amount": 34400000000, "count": 11, "sentiment": "bearish"}, {"sector": "게임", "net_amount": -11500000000, "buy_amount": 3000000000, "sell_amount": 14500000000, "count": 4, "sentiment": "bearish"}, {"sector": "전자", "net_amount": 6000000000, "buy_amount": 8500000000, "sell_amount": 2500000000, "count": 3, "sentiment": "bullish"}];
+        const DAILY_DATA = [{"date": "20260101", "buy": 5200000000, "sell": 3100000000}, {"date": "20260102", "buy": 8500000000, "sell": 4200000000}, {"date": "20260103", "buy": 12000000000, "sell": 6800000000}, {"date": "20260106", "buy": 9500000000, "sell": 15200000000}, {"date": "20260107", "buy": 7200000000, "sell": 5100000000}, {"date": "20260108", "buy": 18500000000, "sell": 8900000000}, {"date": "20260109", "buy": 5500000000, "sell": 2800000000}, {"date": "20260110", "buy": 8000000000, "sell": 4500000000}, {"date": "20260113", "buy": 6000000000, "sell": 3200000000}, {"date": "20260114", "buy": 8800000000, "sell": 5500000000}, {"date": "20260115", "buy": 4200000000, "sell": 11500000000}, {"date": "20260116", "buy": 6750000000, "sell": 3800000000}, {"date": "20260117", "buy": 8400000000, "sell": 4200000000}, {"date": "20260118", "buy": 17500000000, "sell": 5800000000}, {"date": "20260119", "buy": 5200000000, "sell": 12600000000}, {"date": "20260120", "buy": 7600000000, "sell": 4100000000}, {"date": "20260121", "buy": 27000000000, "sell": 8500000000}, {"date": "20260122", "buy": 11400000000, "sell": 6200000000}, {"date": "20260123", "buy": 15600000000, "sell": 7800000000}, {"date": "20260124", "buy": 4500000000, "sell": 8000000000}, {"date": "20260125", "buy": 6200000000, "sell": 14400000000}, {"date": "20260126", "buy": 10500000000, "sell": 5200000000}, {"date": "20260127", "buy": 18000000000, "sell": 7500000000}, {"date": "20260128", "buy": 36000000000, "sell": 9800000000}];
+        
+        let currentPeriod = '3M';
+        let currentType = 'all';
+        let searchQuery = '';
+        let chart = null;
+        
+        // 금액 포맷
+        function formatAmount(amount) {
+            const billion = Math.abs(amount) / 100000000;
+            const sign = amount >= 0 ? '+' : '-';
+            if (billion >= 10000) {
+                return sign + (billion / 10000).toFixed(1) + '조';
+            }
+            return sign + billion.toFixed(0) + '억';
+        }
+        
+        // 날짜 필터
+        function filterByPeriod(dateStr) {
+            const date = new Date(dateStr.slice(0, 4) + '-' + dateStr.slice(4, 6) + '-' + dateStr.slice(6, 8));
+            const now = new Date();
+            let daysAgo = 90;
+            if (currentPeriod === '1W') daysAgo = 7;
+            else if (currentPeriod === '1M') daysAgo = 30;
+            const cutoff = new Date(now - daysAgo * 24 * 60 * 60 * 1000);
+            return date >= cutoff;
+        }
+        
+        // 차트 렌더링
+        function renderChart() {
+            const filtered = DAILY_DATA.filter(d => filterByPeriod(d.date));
+            
+            const labels = filtered.map(d => d.date.slice(4, 6) + '/' + d.date.slice(6, 8));
+            const buyData = filtered.map(d => d.buy / 100000000);
+            const sellData = filtered.map(d => -d.sell / 100000000);
+            
+            if (chart) {
+                chart.data.labels = labels;
+                chart.data.datasets[0].data = buyData;
+                chart.data.datasets[1].data = sellData;
+                chart.update();
+            } else {
+                const ctx = document.getElementById('dailyChart').getContext('2d');
+                chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: '매수',
+                                data: buyData,
+                                backgroundColor: '#22c55e',
+                                borderRadius: 4,
+                            },
+                            {
+                                label: '매도',
+                                data: sellData,
+                                backgroundColor: '#ef4444',
+                                borderRadius: 4,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: { color: '#9ca3af', font: { size: 11 } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => ctx.dataset.label + ': ' + Math.abs(ctx.parsed.y).toFixed(0) + '억원'
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: '#222' },
+                                ticks: { color: '#6b7280', font: { size: 10 } }
+                            },
+                            y: {
+                                grid: { color: '#222' },
+                                ticks: {
+                                    color: '#6b7280',
+                                    font: { size: 10 },
+                                    callback: (v) => Math.abs(v) + '억'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Hot Stocks 렌더링
+        function renderHotStocks() {
+            const container = document.getElementById('hot-stocks-list');
+            container.innerHTML = HOT_STOCKS.slice(0, 10).map((stock, i) => `
+                <div class="list-item">
+                    <span class="list-rank">${i + 1}</span>
+                    <div class="list-info">
+                        <div class="list-name">${stock.name}</div>
+                        <div class="list-sub">${stock.count}건</div>
+                    </div>
+                    <span class="list-value ${stock.net_amount >= 0 ? 'positive' : 'negative'}">
+                        ${formatAmount(stock.net_amount)}원
+                    </span>
+                </div>
+            `).join('');
+        }
+        
+        // Big Players 렌더링
+        function renderBigPlayers() {
+            const container = document.getElementById('big-players-list');
+            container.innerHTML = BIG_PLAYERS.slice(0, 10).map((player, i) => `
+                <div class="list-item">
+                    <span class="list-rank">${i + 1}</span>
+                    <div class="list-info">
+                        <div class="list-name">${player.name}</div>
+                        <div class="list-sub">${player.corp_name} · ${player.position}</div>
+                    </div>
+                    <span class="list-value ${player.type === '매수' ? 'positive' : 'negative'}">
+                        ${player.type === '매수' ? '+' : '-'}${(player.amount / 100000000).toFixed(0)}억
+                    </span>
+                </div>
+            `).join('');
+        }
+        
+        // 섹터 렌더링
+        function renderSectors() {
+            const container = document.getElementById('sector-grid');
+            container.innerHTML = SECTORS.map(sector => `
+                <div class="sector-card">
+                    <div class="sector-name">
+                        <span class="sector-indicator ${sector.sentiment}"></span>
+                        ${sector.sector}
+                    </div>
+                    <div class="sector-value ${sector.net_amount >= 0 ? 'positive' : 'negative'}">
+                        ${formatAmount(sector.net_amount)}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 테이블 렌더링
+        function renderTable() {
+            let filtered = TRADES.filter(t => filterByPeriod(t.report_date));
+            
+            if (currentType === 'buy') {
+                filtered = filtered.filter(t => t.trade_type === '매수');
+            } else if (currentType === 'sell') {
+                filtered = filtered.filter(t => t.trade_type === '매도');
+            }
+            
+            if (searchQuery) {
+                filtered = filtered.filter(t => 
+                    t.corp_name.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+            }
+            
+            const tbody = document.getElementById('trades-table');
+            tbody.innerHTML = filtered.slice(0, 100).map(t => `
+                <tr>
+                    <td>${t.report_date.slice(0, 4)}-${t.report_date.slice(4, 6)}-${t.report_date.slice(6, 8)}</td>
+                    <td><strong>${t.corp_name}</strong></td>
+                    <td>${t.insider_name}</td>
+                    <td>${t.position}</td>
+                    <td><span class="type-badge ${t.trade_type === '매수' ? 'buy' : t.trade_type === '매도' ? 'sell' : 'other'}">${t.trade_type}</span></td>
+                    <td>${t.shares_change.toLocaleString()}주</td>
+                    <td>${(t.amount / 100000000).toFixed(1)}억</td>
+                </tr>
+            `).join('');
+        }
+        
+        // 필터 이벤트
+        document.querySelectorAll('.filter-btn[data-period]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn[data-period]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentPeriod = btn.dataset.period;
+                renderChart();
+                renderTable();
+            });
+        });
+        
+        document.querySelectorAll('.filter-btn[data-type]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn[data-type]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentType = btn.dataset.type;
+                renderTable();
+            });
+        });
+        
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderTable();
+        });
+        
+        // 초기화
+        renderChart();
+        renderHotStocks();
+        renderBigPlayers();
+        renderSectors();
+        renderTable();
+    </script>
+</body>
+</html>
