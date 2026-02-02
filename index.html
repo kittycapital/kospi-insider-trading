@@ -198,34 +198,44 @@
         .type-badge.buy { background: #14532d; color: #22c55e; }
         .type-badge.sell { background: #7f1d1d; color: #ef4444; }
         .type-badge.other { background: #1f2937; color: #9ca3af; }
+        
+        #search-input {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: #fff;
+            font-size: 13px;
+            width: 200px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1 class="title">📊 코스피 200 내부자 거래</h1>
-            <p class="subtitle">마지막 업데이트: 2026-02-02 05:18 · 최근 3개월 데이터</p>
+            <p class="subtitle">마지막 업데이트: <span id="last-updated">-</span> · 최근 3개월 데이터</p>
         </div>
         
         <div class="summary-cards">
             <div class="summary-card">
                 <div class="card-label">전체 순매수</div>
-                <div class="card-value positive">+0.9조원</div>
-                <div class="card-sub">매수 0.9조 / 매도 0억</div>
+                <div class="card-value positive" id="net-amount">-</div>
+                <div class="card-sub" id="buy-sell-sub">-</div>
             </div>
             <div class="summary-card">
                 <div class="card-label">매수 우위 종목</div>
-                <div class="card-value positive">12개</div>
+                <div class="card-value positive" id="buy-stocks">-</div>
                 <div class="card-sub">순매수 > 0</div>
             </div>
             <div class="summary-card">
                 <div class="card-label">매도 우위 종목</div>
-                <div class="card-value negative">1개</div>
+                <div class="card-value negative" id="sell-stocks">-</div>
                 <div class="card-sub">순매수 &lt; 0</div>
             </div>
             <div class="summary-card">
                 <div class="card-label">총 거래 건수</div>
-                <div class="card-value" style="color: #fff;">30건</div>
+                <div class="card-value" style="color: #fff;" id="total-trades">-</div>
                 <div class="card-sub">3개월 누적</div>
             </div>
         </div>
@@ -269,15 +279,7 @@
         <div class="table-section">
             <div class="table-header">
                 <div class="section-title" style="margin: 0;">📋 상세 거래 내역</div>
-                <input type="text" id="search-input" placeholder="종목명 검색..." style="
-                    background: #1a1a1a;
-                    border: 1px solid #333;
-                    border-radius: 6px;
-                    padding: 8px 12px;
-                    color: #fff;
-                    font-size: 13px;
-                    width: 200px;
-                ">
+                <input type="text" id="search-input" placeholder="종목명 검색...">
             </div>
             <div class="table-scroll">
                 <table>
@@ -299,16 +301,23 @@
     </div>
 
     <script>
-        const TRADES = [{"corp_name": "삼성전자", "corp_code": "00126380", "report_date": "2026-01-09", "insider_name": "삼성물산", "position": "", "change_reason": "- 보유주식수 변동\n- 보유주식등에 관한 계약의 변경", "shares_before": 0, "shares_after": 0, "shares_change": 386875, "trade_type": "기타", "stock_code": "005930", "sector": "반도체", "price": 72000, "amount": 27855000000}, {"corp_name": "삼성전자", "corp_code": "00126380", "report_date": "2026-01-16", "insider_name": "삼성물산", "position": "", "change_reason": "- 보유주식수 변동\n- 유가증권신탁(보유형태 변경 포함)", "shares_before": 0, "shares_after": 0, "shares_change": 11934, "trade_type": "기타", "stock_code": "005930", "sector": "반도체", "price": 72000, "amount": 859248000}, {"corp_name": "삼성전자", "corp_code": "00126380", "report_date": "2026-01-23", "insider_name": "삼성물산", "position": "", "change_reason": "- 보유주식수 변동\n- 보유주식등에 관한 계약의 변경", "shares_before": 0, "shares_after": 0, "shares_change": 187402, "trade_type": "기타", "stock_code": "005930", "sector": "반도체", "price": 72000, "amount": 13492944000}, {"corp_name": "삼성전자", "corp_code": "00126380", "report_date": "2026-01-30", "insider_name": "삼성물산", "position": "", "change_reason": "- 보유주식수 변동\n- 보유주식등에 관한 계약의 변경", "shares_before": 0, "shares_after": 0, "shares_change": 35644, "trade_type": "기타", "stock_code": "005930", "sector": "반도체", "price": 72000, "amount": 2566368000}, {"corp_name": "현대차", "corp_code": "00164742", "report_date": "2026-01-05", "insider_name": "현대모비스", "position": "", "change_reason": "특별관계자 제외", "shares_before": 0, "shares_after": 0, "shares_change": 1258, "trade_type": "기타", "stock_code": "005380", "sector": "자동차", "price": 210000, "amount": 264180000}, {"corp_name": "셀트리온", "corp_code": "00413046", "report_date": "2026-01-12", "insider_name": "셀트리온홀딩스", "position": "", "change_reason": "주식담보대출 만기연장 및 신규차입 /\n보고자 및 특관자 주식매수, 주식매도 /\n임원퇴임", "shares_before": 0, "shares_after": 0, "shares_change": 962295, "trade_type": "매수", "stock_code": "068270", "sector": "바이오", "price": 180000, "amount": 173213100000}, {"corp_name": "삼성물산", "corp_code": "00149655", "report_date": "2026-01-09", "insider_name": "이재용", "position": "", "change_reason": "보유주식수 변동,\n주식 증여 및 수증", "shares_before": 0, "shares_after": 0, "shares_change": 8014, "trade_type": "기타", "stock_code": "028260", "sector": "건설", "price": 50000, "amount": 400700000}, {"corp_name": "SK텔레콤", "corp_code": "00159023", "report_date": "2026-01-26", "insider_name": "WellingtonManagementCompanyLLP", "position": "", "change_reason": "- 단순투자목적으로 장내에서 발행회사의 주식 매수", "shares_before": 0, "shares_after": 0, "shares_change": 195740, "trade_type": "매수", "stock_code": "017670", "sector": "통신", "price": 50000, "amount": 9787000000}, {"corp_name": "KT", "corp_code": "00190321", "report_date": "2026-01-22", "insider_name": "WellingtonManagementCompanyLLP", "position": "", "change_reason": "- 단순투자목적으로 장내에서 발행회사의 주식 매수\n- 장외에서 발행회사의 증권예탁증권 매수\n- 특별관계자 추가", "shares_before": 0, "shares_after": 0, "shares_change": 1002244, "trade_type": "매수", "stock_code": "030200", "sector": "통신", "price": 50000, "amount": 50112200000}, {"corp_name": "삼성생명", "corp_code": "00126256", "report_date": "2026-01-23", "insider_name": "삼성물산", "position": "", "change_reason": "보유주식 등에 관한 계약의 변경", "shares_before": 0, "shares_after": 0, "shares_change": 0, "trade_type": "기타", "stock_code": "032830", "sector": "보험", "price": 50000, "amount": 0}, {"corp_name": "우리금융지주", "corp_code": "01350869", "report_date": "2026-01-30", "insider_name": "(주)우리금융지주 우리사주조합", "position": "", "change_reason": "1% 지분변동에 따른 변동공시\n(\n※ 25년말 기준 지분율 : 7.76%) ", "shares_before": 0, "shares_after": 0, "shares_change": 8248130, "trade_type": "기타", "stock_code": "316140", "sector": "금융", "price": 50000, "amount": 412406500000}, {"corp_name": "KT&G", "corp_code": "00244455", "report_date": "2026-01-30", "insider_name": "BlackRockFundAdvisors", "position": "", "change_reason": "- 단순투자목적으로 장내에서 발행회사의 주식 매수", "shares_before": 0, "shares_after": 0, "shares_change": 68646, "trade_type": "매수", "stock_code": "033780", "sector": "소비재", "price": 50000, "amount": 3432300000}, {"corp_name": "고려아연", "corp_code": "00102858", "report_date": "2026-01-06", "insider_name": "크루시블제이브이", "position": "", "change_reason": "발행회사의 제3자배정 유상증자에 따른 주식 취득", "shares_before": 0, "shares_after": 0, "shares_change": 2209716, "trade_type": "매수", "stock_code": "010130", "sector": "소재", "price": 50000, "amount": 110485800000}, {"corp_name": "삼성전기", "corp_code": "00126371", "report_date": "2026-01-02", "insider_name": "국민연금공단", "position": "", "change_reason": "단순추가취득/처분", "shares_before": 0, "shares_after": 0, "shares_change": 758325, "trade_type": "매수", "stock_code": "009150", "sector": "전자", "price": 50000, "amount": 37916250000}, {"corp_name": "크래프톤", "corp_code": "00760971", "report_date": "2026-01-15", "insider_name": "장병규", "position": "", "change_reason": "신규보고", "shares_before": 0, "shares_after": 0, "shares_change": 2050, "trade_type": "기타", "stock_code": "259960", "sector": "게임", "price": 50000, "amount": 102500000}, {"corp_name": "크래프톤", "corp_code": "00760971", "report_date": "2026-01-30", "insider_name": "장병규", "position": "", "change_reason": "장내매도", "shares_before": 0, "shares_after": 0, "shares_change": 310, "trade_type": "매도", "stock_code": "259960", "sector": "게임", "price": 50000, "amount": 15500000}, {"corp_name": "엔씨소프트", "corp_code": "00261443", "report_date": "2026-01-02", "insider_name": "국민연금공단", "position": "", "change_reason": "단순추가취득/처분", "shares_before": 0, "shares_after": 0, "shares_change": 261113, "trade_type": "매수", "stock_code": "036570", "sector": "게임", "price": 50000, "amount": 13055650000}, {"corp_name": "엔씨소프트", "corp_code": "00261443", "report_date": "2026-01-05", "insider_name": "PublicInvestmentFund", "position": "", "change_reason": "- 대표보고자 변경에 따른 변동보고 (폐지보고)", "shares_before": 0, "shares_after": 0, "shares_change": 2032411, "trade_type": "기타", "stock_code": "036570", "sector": "게임", "price": 50000, "amount": 101620550000}, {"corp_name": "엔씨소프트", "corp_code": "00261443", "report_date": "2026-01-05", "insider_name": "SaudiElectronicGamingHoldingCompany", "position": "", "change_reason": "- 대표보고자 변경에 따른 신규보고", "shares_before": 0, "shares_after": 0, "shares_change": 2032411, "trade_type": "기타", "stock_code": "036570", "sector": "게임", "price": 50000, "amount": 101620550000}, {"corp_name": "S-Oil", "corp_code": "00138279", "report_date": "2026-01-02", "insider_name": "국민연금공단", "position": "", "change_reason": "단순추가취득/처분", "shares_before": 0, "shares_after": 0, "shares_change": 1138560, "trade_type": "매수", "stock_code": "010950", "sector": "에너지", "price": 50000, "amount": 56928000000}, {"corp_name": "CJ제일제당", "corp_code": "00635134", "report_date": "2026-01-02", "insider_name": "국민연금공단", "position": "", "change_reason": "단순추가취득/처분", "shares_before": 0, "shares_after": 0, "shares_change": 301174, "trade_type": "매수", "stock_code": "097950", "sector": "식품", "price": 50000, "amount": 15058700000}, {"corp_name": "현대제철", "corp_code": "00145880", "report_date": "2026-01-07", "insider_name": "기아", "position": "", "change_reason": "특별관계자 제외", "shares_before": 0, "shares_after": 0, "shares_change": 2000, "trade_type": "기타", "stock_code": "004020", "sector": "철강", "price": 50000, "amount": 100000000}, {"corp_name": "LG이노텍", "corp_code": "00105961", "report_date": "2026-01-02", "insider_name": "국민연금공단", "position": "", "change_reason": "단순추가취득/처분", "shares_before": 0, "shares_after": 0, "shares_change": 245000, "trade_type": "매수", "stock_code": "011070", "sector": "전자", "price": 50000, "amount": 12250000000}, {"corp_name": "카카오페이", "corp_code": "01244601", "report_date": "2026-01-06", "insider_name": "카카오", "position": "", "change_reason": "특별관계자의 교환사채 교환, 교환사채 계약기간 만료", "shares_before": 0, "shares_after": 0, "shares_change": 1273600, "trade_type": "기타", "stock_code": "377300", "sector": "핀테크", "price": 50000, "amount": 63680000000}, {"corp_name": "카카오페이", "corp_code": "01244601", "report_date": "2026-01-09", "insider_name": "GOLDMANSACHSINTERNATIONAL", "position": "", "change_reason": "- 단순투자목적으로 주식 장내매매\n- 주식대차계약상 최대 차입 가능 수량 변경", "shares_before": 0, "shares_after": 0, "shares_change": 4556617, "trade_type": "기타", "stock_code": "377300", "sector": "핀테크", "price": 50000, "amount": 227830850000}, {"corp_name": "카카오페이", "corp_code": "01244601", "report_date": "2026-01-16", "insider_name": "카카오", "position": "", "change_reason": "주식대차계약 종결, 주식근질권계약 종결", "shares_before": 0, "shares_after": 0, "shares_change": 0, "trade_type": "기타", "stock_code": "377300", "sector": "핀테크", "price": 50000, "amount": 0}, {"corp_name": "카카오페이", "corp_code": "01244601", "report_date": "2026-01-20", "insider_name": "삼성증권", "position": "", "change_reason": "주식 대여상환, 차입 및 차입상환", "shares_before": 0, "shares_after": 0, "shares_change": 153, "trade_type": "기타", "stock_code": "377300", "sector": "핀테크", "price": 50000, "amount": 7650000}, {"corp_name": "JYP Ent.", "corp_code": "00258689", "report_date": "2026-01-02", "insider_name": "국민연금공단", "position": "", "change_reason": "단순추가취득/처분", "shares_before": 0, "shares_after": 0, "shares_change": 406431, "trade_type": "매수", "stock_code": "035900", "sector": "엔터", "price": 50000, "amount": 20321550000}, {"corp_name": "대한항공", "corp_code": "00113526", "report_date": "2026-01-02", "insider_name": "국민연금공단", "position": "", "change_reason": "단순추가취득/처분", "shares_before": 0, "shares_after": 0, "shares_change": 7390982, "trade_type": "매수", "stock_code": "003490", "sector": "운송", "price": 50000, "amount": 369549100000}, {"corp_name": "한국타이어앤테크놀로지", "corp_code": "00937324", "report_date": "2026-01-14", "insider_name": "한국앤컴퍼니", "position": "", "change_reason": "보유 주식에 관한 계약의 변경", "shares_before": 0, "shares_after": 0, "shares_change": 0, "trade_type": "기타", "stock_code": "161390", "sector": "자동차", "price": 50000, "amount": 0}];
-        const HOT_STOCKS = [{"stock_code": "003490", "name": "대한항공", "net_amount": 369549100000, "buy_amount": 369549100000, "sell_amount": 0, "count": 1, "sentiment": "bullish"}, {"stock_code": "068270", "name": "셀트리온", "net_amount": 173213100000, "buy_amount": 173213100000, "sell_amount": 0, "count": 1, "sentiment": "bullish"}, {"stock_code": "010130", "name": "고려아연", "net_amount": 110485800000, "buy_amount": 110485800000, "sell_amount": 0, "count": 1, "sentiment": "bullish"}, {"stock_code": "010950", "name": "S-Oil", "net_amount": 56928000000, "buy_amount": 56928000000, "sell_amount": 0, "count": 1, "sentiment": "bullish"}, {"stock_code": "030200", "name": "KT", "net_amount": 50112200000, "buy_amount": 50112200000, "sell_amount": 0, "count": 1, "sentiment": "bullish"}, {"stock_code": "009150", "name": "삼성전기", "net_amount": 37916250000, "buy_amount": 37916250000, "sell_amount": 0, "count": 1, "sentiment": "bullish"}, {"stock_code": "035900", "name": "JYP Ent.", "net_amount": 20321550000, "buy_amount": 20321550000, "sell_amount": 0, "count": 1, "sentiment": "bullish"}, {"stock_code": "097950", "name": "CJ제일제당", "net_amount": 15058700000, "buy_amount": 15058700000, "sell_amount": 0, "count": 1, "sentiment": "bullish"}, {"stock_code": "036570", "name": "엔씨소프트", "net_amount": 13055650000, "buy_amount": 13055650000, "sell_amount": 0, "count": 3, "sentiment": "bullish"}, {"stock_code": "011070", "name": "LG이노텍", "net_amount": 12250000000, "buy_amount": 12250000000, "sell_amount": 0, "count": 1, "sentiment": "bullish"}, {"stock_code": "017670", "name": "SK텔레콤", "net_amount": 9787000000, "buy_amount": 9787000000, "sell_amount": 0, "count": 1, "sentiment": "bullish"}, {"stock_code": "033780", "name": "KT&G", "net_amount": 3432300000, "buy_amount": 3432300000, "sell_amount": 0, "count": 1, "sentiment": "bullish"}, {"stock_code": "259960", "name": "크래프톤", "net_amount": -15500000, "buy_amount": 0, "sell_amount": 15500000, "count": 2, "sentiment": "bearish"}, {"stock_code": "005930", "name": "삼성전자", "net_amount": 0, "buy_amount": 0, "sell_amount": 0, "count": 4, "sentiment": "neutral"}, {"stock_code": "005380", "name": "현대차", "net_amount": 0, "buy_amount": 0, "sell_amount": 0, "count": 1, "sentiment": "neutral"}, {"stock_code": "028260", "name": "삼성물산", "net_amount": 0, "buy_amount": 0, "sell_amount": 0, "count": 1, "sentiment": "neutral"}, {"stock_code": "032830", "name": "삼성생명", "net_amount": 0, "buy_amount": 0, "sell_amount": 0, "count": 1, "sentiment": "neutral"}, {"stock_code": "316140", "name": "우리금융지주", "net_amount": 0, "buy_amount": 0, "sell_amount": 0, "count": 1, "sentiment": "neutral"}, {"stock_code": "004020", "name": "현대제철", "net_amount": 0, "buy_amount": 0, "sell_amount": 0, "count": 1, "sentiment": "neutral"}, {"stock_code": "377300", "name": "카카오페이", "net_amount": 0, "buy_amount": 0, "sell_amount": 0, "count": 4, "sentiment": "neutral"}];
-        const BIG_PLAYERS = [{"name": "(주)우리금융지주 우리사주조합", "corp_name": "우리금융지주", "position": "", "type": "기타", "amount": 412406500000, "date": "2026-01-30"}, {"name": "국민연금공단", "corp_name": "대한항공", "position": "", "type": "매수", "amount": 369549100000, "date": "2026-01-02"}, {"name": "GOLDMANSACHSINTERNATIONAL", "corp_name": "카카오페이", "position": "", "type": "기타", "amount": 227830850000, "date": "2026-01-09"}, {"name": "셀트리온홀딩스", "corp_name": "셀트리온", "position": "", "type": "매수", "amount": 173213100000, "date": "2026-01-12"}, {"name": "크루시블제이브이", "corp_name": "고려아연", "position": "", "type": "매수", "amount": 110485800000, "date": "2026-01-06"}, {"name": "PublicInvestmentFund", "corp_name": "엔씨소프트", "position": "", "type": "기타", "amount": 101620550000, "date": "2026-01-05"}, {"name": "SaudiElectronicGamingHoldingCompany", "corp_name": "엔씨소프트", "position": "", "type": "기타", "amount": 101620550000, "date": "2026-01-05"}, {"name": "카카오", "corp_name": "카카오페이", "position": "", "type": "기타", "amount": 63680000000, "date": "2026-01-06"}, {"name": "국민연금공단", "corp_name": "S-Oil", "position": "", "type": "매수", "amount": 56928000000, "date": "2026-01-02"}, {"name": "WellingtonManagementCompanyLLP", "corp_name": "KT", "position": "", "type": "매수", "amount": 50112200000, "date": "2026-01-22"}, {"name": "국민연금공단", "corp_name": "삼성전기", "position": "", "type": "매수", "amount": 37916250000, "date": "2026-01-02"}, {"name": "삼성물산", "corp_name": "삼성전자", "position": "", "type": "기타", "amount": 27855000000, "date": "2026-01-09"}, {"name": "국민연금공단", "corp_name": "JYP Ent.", "position": "", "type": "매수", "amount": 20321550000, "date": "2026-01-02"}, {"name": "국민연금공단", "corp_name": "CJ제일제당", "position": "", "type": "매수", "amount": 15058700000, "date": "2026-01-02"}, {"name": "삼성물산", "corp_name": "삼성전자", "position": "", "type": "기타", "amount": 13492944000, "date": "2026-01-23"}, {"name": "국민연금공단", "corp_name": "엔씨소프트", "position": "", "type": "매수", "amount": 13055650000, "date": "2026-01-02"}, {"name": "국민연금공단", "corp_name": "LG이노텍", "position": "", "type": "매수", "amount": 12250000000, "date": "2026-01-02"}, {"name": "WellingtonManagementCompanyLLP", "corp_name": "SK텔레콤", "position": "", "type": "매수", "amount": 9787000000, "date": "2026-01-26"}, {"name": "BlackRockFundAdvisors", "corp_name": "KT&G", "position": "", "type": "매수", "amount": 3432300000, "date": "2026-01-30"}, {"name": "삼성물산", "corp_name": "삼성전자", "position": "", "type": "기타", "amount": 2566368000, "date": "2026-01-30"}];
-        const SECTORS = [{"sector": "운송", "net_amount": 369549100000, "buy_amount": 369549100000, "sell_amount": 0, "count": 1, "sentiment": "bullish"}, {"sector": "바이오", "net_amount": 173213100000, "buy_amount": 173213100000, "sell_amount": 0, "count": 1, "sentiment": "bullish"}, {"sector": "소재", "net_amount": 110485800000, "buy_amount": 110485800000, "sell_amount": 0, "count": 1, "sentiment": "bullish"}, {"sector": "통신", "net_amount": 59899200000, "buy_amount": 59899200000, "sell_amount": 0, "count": 2, "sentiment": "bullish"}, {"sector": "에너지", "net_amount": 56928000000, "buy_amount": 56928000000, "sell_amount": 0, "count": 1, "sentiment": "bullish"}, {"sector": "전자", "net_amount": 50166250000, "buy_amount": 50166250000, "sell_amount": 0, "count": 2, "sentiment": "bullish"}, {"sector": "엔터", "net_amount": 20321550000, "buy_amount": 20321550000, "sell_amount": 0, "count": 1, "sentiment": "bullish"}, {"sector": "식품", "net_amount": 15058700000, "buy_amount": 15058700000, "sell_amount": 0, "count": 1, "sentiment": "bullish"}, {"sector": "게임", "net_amount": 13040150000, "buy_amount": 13055650000, "sell_amount": 15500000, "count": 5, "sentiment": "bullish"}, {"sector": "소비재", "net_amount": 3432300000, "buy_amount": 3432300000, "sell_amount": 0, "count": 1, "sentiment": "bullish"}, {"sector": "반도체", "net_amount": 0, "buy_amount": 0, "sell_amount": 0, "count": 4, "sentiment": "neutral"}, {"sector": "자동차", "net_amount": 0, "buy_amount": 0, "sell_amount": 0, "count": 2, "sentiment": "neutral"}, {"sector": "건설", "net_amount": 0, "buy_amount": 0, "sell_amount": 0, "count": 1, "sentiment": "neutral"}, {"sector": "보험", "net_amount": 0, "buy_amount": 0, "sell_amount": 0, "count": 1, "sentiment": "neutral"}, {"sector": "금융", "net_amount": 0, "buy_amount": 0, "sell_amount": 0, "count": 1, "sentiment": "neutral"}, {"sector": "철강", "net_amount": 0, "buy_amount": 0, "sell_amount": 0, "count": 1, "sentiment": "neutral"}, {"sector": "핀테크", "net_amount": 0, "buy_amount": 0, "sell_amount": 0, "count": 4, "sentiment": "neutral"}];
-        const DAILY_DATA = [{"date": "2026-01-02", "buy": 525079250000, "sell": 0}, {"date": "2026-01-06", "buy": 110485800000, "sell": 0}, {"date": "2026-01-12", "buy": 173213100000, "sell": 0}, {"date": "2026-01-22", "buy": 50112200000, "sell": 0}, {"date": "2026-01-26", "buy": 9787000000, "sell": 0}, {"date": "2026-01-30", "buy": 3432300000, "sell": 15500000}];
-        
+        let DATA = null;
         let currentPeriod = '3M';
         let currentType = 'all';
         let searchQuery = '';
         let chart = null;
+        
+        // 데이터 로드
+        async function loadData() {
+            try {
+                const response = await fetch('./data/insider.json');
+                DATA = await response.json();
+                console.log('Data loaded:', DATA);
+                initDashboard();
+            } catch (error) {
+                console.error('Failed to load data:', error);
+            }
+        }
         
         // 금액 포맷
         function formatAmount(amount) {
@@ -320,9 +329,23 @@
             return sign + billion.toFixed(0) + '억';
         }
         
+        // 날짜 파싱 (2026-01-09 또는 20260109 둘 다 처리)
+        function parseDate(dateStr) {
+            if (!dateStr) return new Date();
+            const clean = dateStr.replace(/-/g, '');
+            return new Date(clean.slice(0,4) + '-' + clean.slice(4,6) + '-' + clean.slice(6,8));
+        }
+        
+        // 날짜 표시
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            if (dateStr.includes('-')) return dateStr;
+            return dateStr.slice(0,4) + '-' + dateStr.slice(4,6) + '-' + dateStr.slice(6,8);
+        }
+        
         // 날짜 필터
         function filterByPeriod(dateStr) {
-            const date = new Date(dateStr.slice(0, 4) + '-' + dateStr.slice(4, 6) + '-' + dateStr.slice(6, 8));
+            const date = parseDate(dateStr);
             const now = new Date();
             let daysAgo = 90;
             if (currentPeriod === '1W') daysAgo = 7;
@@ -331,13 +354,39 @@
             return date >= cutoff;
         }
         
+        // 대시보드 초기화
+        function initDashboard() {
+            if (!DATA) return;
+            
+            // Summary
+            document.getElementById('last-updated').textContent = DATA.lastUpdated;
+            document.getElementById('net-amount').textContent = formatAmount(DATA.summary.net_amount) + '원';
+            document.getElementById('buy-sell-sub').textContent = 
+                '매수 ' + formatAmount(DATA.summary.total_buy) + ' / 매도 ' + formatAmount(DATA.summary.total_sell);
+            document.getElementById('buy-stocks').textContent = DATA.summary.buy_stocks + '개';
+            document.getElementById('sell-stocks').textContent = DATA.summary.sell_stocks + '개';
+            document.getElementById('total-trades').textContent = DATA.summary.total_trades + '건';
+            
+            renderChart();
+            renderHotStocks();
+            renderBigPlayers();
+            renderSectors();
+            renderTable();
+        }
+        
         // 차트 렌더링
         function renderChart() {
-            const filtered = DAILY_DATA.filter(d => filterByPeriod(d.date));
+            if (!DATA || !DATA.dailyData) return;
             
-            const labels = filtered.map(d => d.date.slice(4, 6) + '/' + d.date.slice(6, 8));
-            const buyData = filtered.map(d => d.buy / 100000000);
-            const sellData = filtered.map(d => -d.sell / 100000000);
+            const filtered = DATA.dailyData.filter(d => filterByPeriod(d.date));
+            console.log('Chart data:', filtered);
+            
+            const labels = filtered.map(d => {
+                const clean = d.date.replace(/-/g, '');
+                return clean.slice(4,6) + '/' + clean.slice(6,8);
+            });
+            const buyData = filtered.map(d => (d.buy || 0) / 100000000);
+            const sellData = filtered.map(d => -(d.sell || 0) / 100000000);
             
             if (chart) {
                 chart.data.labels = labels;
@@ -401,8 +450,12 @@
         
         // Hot Stocks 렌더링
         function renderHotStocks() {
+            if (!DATA || !DATA.hotStocks) return;
+            
             const container = document.getElementById('hot-stocks-list');
-            container.innerHTML = HOT_STOCKS.slice(0, 10).map((stock, i) => `
+            const list = DATA.hotStocks.filter(s => s.net_amount !== 0).slice(0, 10);
+            
+            container.innerHTML = list.map((stock, i) => `
                 <div class="list-item">
                     <span class="list-rank">${i + 1}</span>
                     <div class="list-info">
@@ -418,13 +471,15 @@
         
         // Big Players 렌더링
         function renderBigPlayers() {
+            if (!DATA || !DATA.bigPlayers) return;
+            
             const container = document.getElementById('big-players-list');
-            container.innerHTML = BIG_PLAYERS.slice(0, 10).map((player, i) => `
+            container.innerHTML = DATA.bigPlayers.slice(0, 10).map((player, i) => `
                 <div class="list-item">
                     <span class="list-rank">${i + 1}</span>
                     <div class="list-info">
                         <div class="list-name">${player.name}</div>
-                        <div class="list-sub">${player.corp_name} · ${player.position}</div>
+                        <div class="list-sub">${player.corp_name} · ${player.position || '-'}</div>
                     </div>
                     <span class="list-value ${player.type === '매수' ? 'positive' : 'negative'}">
                         ${player.type === '매수' ? '+' : '-'}${(player.amount / 100000000).toFixed(0)}억
@@ -435,8 +490,10 @@
         
         // 섹터 렌더링
         function renderSectors() {
+            if (!DATA || !DATA.sectorSentiment) return;
+            
             const container = document.getElementById('sector-grid');
-            container.innerHTML = SECTORS.map(sector => `
+            container.innerHTML = DATA.sectorSentiment.map(sector => `
                 <div class="sector-card">
                     <div class="sector-name">
                         <span class="sector-indicator ${sector.sentiment}"></span>
@@ -451,7 +508,9 @@
         
         // 테이블 렌더링
         function renderTable() {
-            let filtered = TRADES.filter(t => filterByPeriod(t.report_date));
+            if (!DATA || !DATA.trades) return;
+            
+            let filtered = DATA.trades.filter(t => filterByPeriod(t.report_date));
             
             if (currentType === 'buy') {
                 filtered = filtered.filter(t => t.trade_type === '매수');
@@ -468,13 +527,13 @@
             const tbody = document.getElementById('trades-table');
             tbody.innerHTML = filtered.slice(0, 100).map(t => `
                 <tr>
-                    <td>${t.report_date.slice(0, 4)}-${t.report_date.slice(4, 6)}-${t.report_date.slice(6, 8)}</td>
+                    <td>${formatDate(t.report_date)}</td>
                     <td><strong>${t.corp_name}</strong></td>
                     <td>${t.insider_name}</td>
-                    <td>${t.position}</td>
+                    <td>${t.position || '-'}</td>
                     <td><span class="type-badge ${t.trade_type === '매수' ? 'buy' : t.trade_type === '매도' ? 'sell' : 'other'}">${t.trade_type}</span></td>
-                    <td>${t.shares_change.toLocaleString()}주</td>
-                    <td>${(t.amount / 100000000).toFixed(1)}억</td>
+                    <td>${(t.shares_change || 0).toLocaleString()}주</td>
+                    <td>${((t.amount || 0) / 100000000).toFixed(1)}억</td>
                 </tr>
             `).join('');
         }
@@ -504,12 +563,8 @@
             renderTable();
         });
         
-        // 초기화
-        renderChart();
-        renderHotStocks();
-        renderBigPlayers();
-        renderSectors();
-        renderTable();
+        // 시작
+        loadData();
     </script>
 </body>
 </html>
